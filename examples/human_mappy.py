@@ -7,7 +7,7 @@ This is based on https://github.com/lh3/minimap2/blob/master/python/minimap2.py 
 import os
 import sys
 import argparse
-
+import zlib
 import boto3
 import mappy as mp
 
@@ -39,7 +39,10 @@ def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_pl
 
     for obj in s3_client.list_objects(Bucket=bucket_name)['Contents']:
         if obj['Key'] == wanted:
-            return s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read()
+            if wanted.endswith('.gz'):
+                return zlib.decompress(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read().read(), 16 + zlib.MAX_WBITS)
+            else:
+                return s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read()
 
 
 def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None, bw = None, out_cs = False, verbose=False):
