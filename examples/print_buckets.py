@@ -26,9 +26,11 @@ def print_buckets():
         endpoint_url='https://projects.pawsey.org.au',
     )
 
-    print("Here's list your buckets:")
-    for bucket in s3_client.buckets.all():
-        print(f"\t{bucket.name}")
+    print("Here are your buckets:")
+    # this prints the json object returned:
+    # print(s3_client.list_buckets())
+    for bucket in s3_client.list_buckets()['Buckets']:
+        print(f"\t{bucket['Name']}")
 
 
 if __name__ == "__main__":
