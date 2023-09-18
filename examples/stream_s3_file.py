@@ -13,8 +13,6 @@ import os
 import sys
 import argparse
 import boto3
-import datetime
-from dateutil.tz import tzutc
 
 __author__ = 'Rob Edwards'
 
@@ -34,8 +32,7 @@ def stream_object(object_name, outfile):
         endpoint_url='https://projects.pawsey.org.au',
     )
 
-    # this prints the json object returned:
-    # print(s3_client.list_buckets())
+    # we could go directly, but this runs some sanity checks on our request
     buckets = set()
     for bucket in s3_client.list_buckets()['Buckets']:
         buckets.add(bucket['Name'])
