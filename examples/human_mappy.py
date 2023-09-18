@@ -40,7 +40,7 @@ def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_pl
     for obj in s3_client.list_objects(Bucket=bucket_name)['Contents']:
         if obj['Key'] == wanted:
             if wanted.endswith('.gz'):
-                return zlib.decompress(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read().read(), 16 + zlib.MAX_WBITS)
+                return zlib.decompress(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read(), 16 + zlib.MAX_WBITS)
             else:
                 return s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read()
 
