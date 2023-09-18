@@ -1,2 +1,3 @@
 # acacia-stream
-testing some streaming using minimap and acacia and something
+
+This is a small repo for Rob to test some streaming using minimap and acacia and something
