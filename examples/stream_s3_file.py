@@ -51,9 +51,9 @@ def stream_object(object_name, outfile):
             else:
                 if wanted.endswith('.gz'):
                     print(zlib.decompress(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read(),
-                                           16 + zlib.MAX_WBITS))
+                                           16 + zlib.MAX_WBITS).decode('utf-8'))
                 else:
-                    print(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read())
+                    print(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read().decode('utf-8'))
     
 
 if __name__ == "__main__":
