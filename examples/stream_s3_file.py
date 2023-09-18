@@ -13,6 +13,7 @@ import os
 import sys
 import argparse
 import boto3
+import zlib
 
 __author__ = 'Rob Edwards'
 
@@ -44,15 +45,21 @@ def stream_object(object_name, outfile):
 
     for obj in s3_client.list_objects(Bucket=bucket_name)['Contents']:
         if obj['Key'] == wanted:
-            with open(outfile, 'wb') as out:
-                out.write(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read())
-
+            if outfile:
+                with open(outfile, 'wb') as out:
+                    out.write(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read())
+            else:
+                if wanted.endswith('.gz'):
+                    print(zlib.decompress(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read(),
+                                           16 + zlib.MAX_WBITS))
+                else:
+                    print(s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read())
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=' ')
     parser.add_argument('-o', help='object name (including bucket)', required=True)
-    parser.add_argument('-w', help='outputfile to write', required=True)
+    parser.add_argument('-w', help='outputfile to write')
     parser.add_argument('-v', help='verbose output', action='store_true')
     args = parser.parse_args()
 
