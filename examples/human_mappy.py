@@ -48,7 +48,16 @@ def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_pl
 def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None, bw = None, out_cs = False, verbose=False):
 
 
-    a = mp.Aligner(get_human_genome(), preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
+    # here we create a fifo object that we can pass to the mp.Aligner
+    FIFO_PATH = f'/tmp/tmp.{os.getpid()}.fna.gz'
+    if os.path.exists(FIFO_PATH):
+        print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
+        sys.exit(2)
+    os.mkfifo(FIFO_PATH)
+    out_fifo = open(FIFO_PATH, 'wb+')
+    out_fifo.write(get_human_genome())
+
+    a = mp.Aligner(FIFO_PATH, preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
     if not a:
         raise Exception("ERROR: failed to load/build index file for the human genome")
     for name, seq, qual in mp.fastx_read(reads): # read one sequence
