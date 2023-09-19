@@ -82,7 +82,7 @@ def read_genome(fifo, reads, preset, min_cnt = None, min_sc = None, k = None, w 
             print('{}\t{}\t{}'.format(name, len(seq), h))
 
 
-def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None, bw = None, out_cs = False, verbose=False):
+def read_align(genome, reads, preset, min_cnt = None, min_sc = None, k = None, w = None, bw = None, out_cs = False, verbose=False):
 
     # here we create a fifo object that we can pass to the mp.Aligner
     FIFO_PATH = f'/home/edwa0468/scratch/human/tmp.{os.getpid()}.fna.gz'
@@ -91,7 +91,7 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
     print(f"Our FIFO is at {FIFO_PATH}", file=sys.stderr)
-    writeprocess = Process(target=write_the_genome, args=(FIFO_PATH,))
+    writeprocess = Process(target=write_the_genome, args=(genome, FIFO_PATH,))
     writeprocess.start()
 
     if verbose:
@@ -116,5 +116,5 @@ if __name__ == "__main__":
     parser.add_argument('-v', help='verbose output', action='store_true')
     args = parser.parse_args()
 
-    read_align(reads=args.f, preset=args.x, min_cnt=args.n, min_sc=args.m, k=args.k, w=args.w, bw=args.r, out_cs=args.c, verbose=args.v)
+    read_align(genome=args.g, reads=args.f, preset=args.x, min_cnt=args.n, min_sc=args.m, k=args.k, w=args.w, bw=args.r, out_cs=args.c, verbose=args.v)
 
