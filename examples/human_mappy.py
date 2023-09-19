@@ -98,6 +98,7 @@ def read_align(genome, reads, preset, min_cnt=None, min_sc=None, k=None, w=None,
     readprocess = Process(target=read_genome(fifo_filename, reads, preset, min_cnt, min_sc, k, w, bw, out_cs))
     readprocess.start()
     # wait until reading is done
+    writeprocess.join()
     readprocess.join()
 
     os.unlink(fifo_filename)
