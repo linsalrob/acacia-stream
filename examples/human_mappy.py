@@ -67,7 +67,9 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
     with open(FIFO_PATH, 'wb') as out_fifo:
+        print("Opened", file=sys.stderr)
         out_fifo.write(r)
+        print("Wrote1", file=sys.stderr)
 
     out_fifo.flush()
     print("Wrote")
