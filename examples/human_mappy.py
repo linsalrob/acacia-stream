@@ -77,6 +77,7 @@ def read_genome(fifo, reads, preset, min_cnt = None, min_sc = None, k = None, w 
     print(f"We got {a}", file=sys.stderr)
     if not a:
         raise Exception("ERROR: failed to load/build index file for the human genome")
+    print(f"Reading {reads}", file=sys.stderr)
     for name, seq, qual in mp.fastx_read(reads):  # read one sequence
         print(f"Read {name}")
         for h in a.map(seq, cs=out_cs):  # traverse hits
@@ -101,7 +102,7 @@ def read_align(genome, reads, preset, min_cnt = None, min_sc = None, k = None, w
     readprocess = Process(target=read_genome(FIFO_PATH, preset, min_cnt, min_sc, k, w, bw, out_cs))
     readprocess.start()
     readprocess.join()
-
+    print(f"ALive? {readprocess.is_alive()}")
 
 
 if __name__ == "__main__":
