@@ -99,6 +99,7 @@ def read_align(genome, reads, preset, min_cnt = None, min_sc = None, k = None, w
         print("Opening the aligner", file=sys.stderr)
 
     readprocess = Process(target=read_genome(FIFO_PATH, preset, min_cnt, min_sc, k, w, bw, out_cs))
+    readprocess.start()
     readprocess.join()
 
 
