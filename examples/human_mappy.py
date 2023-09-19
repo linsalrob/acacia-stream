@@ -55,11 +55,6 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
 
 
     stream = get_human_genome(verbose=verbose)
-    if verbose:
-        print("Streaming the file", file=sys.stderr)
-
-    r = stream.read()
-    print("Read")
 
     # here we create a fifo object that we can pass to the mp.Aligner
     FIFO_PATH = f'/home/edwa0468/scratch/human/tmp.{os.getpid()}.fna.gz'
@@ -71,22 +66,12 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
 
     with io.FileIO(fd, 'wb') as f:
         print("Opened", file=sys.stderr)
-        f.write(r)
-        print("Wrote1", file=sys.stderr)
-
-
-
-    """
-    with os.fdopen(fd, 'wb') as out_fifo:
-        print("Opened", file=sys.stderr)
-        out_fifo.write(r)
-        out_fifo.flush()
-    """
+        f.write(stream.read())
 
     print("Wrote")
 
     if verbose:
-        print("OPening the aligner", file=sys.stderr)
+        print("Opening the aligner", file=sys.stderr)
 
     a = mp.Aligner(FIFO_PATH, preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
     if not a:
