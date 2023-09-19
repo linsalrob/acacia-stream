@@ -15,7 +15,8 @@ import mappy as mp
 __author__ = 'Rob Edwards'
 
 
-def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna.gz', verbose=False):
+# def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna.gz', verbose=False):
+def get_human_genome(location='databases/human/chr1.fna.gz', verbose=False):
     """
     Get the human genome
     """
@@ -63,20 +64,22 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
     fd = os.open(FIFO_PATH, os.O_RDWR | os.O_NONBLOCK)
-
+    print(f"FD is {fd}", file=sys.stderr)
     with io.FileIO(fd, 'wb') as f:
         print("Opened", file=sys.stderr)
         f.write(stream.read())
 
-    print("Wrote")
+    print(f"Our FIFO is at {FIFO_PATH}", file=sys.stderr)
 
     if verbose:
         print("Opening the aligner", file=sys.stderr)
 
     a = mp.Aligner(FIFO_PATH, preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
+    print(f"We got {a}", file=sys.stderr)
     if not a:
         raise Exception("ERROR: failed to load/build index file for the human genome")
     for name, seq, qual in mp.fastx_read(reads): # read one sequence
+        print(f"Read {name}")
         for h in a.map(seq, cs=out_cs): # traverse hits
             print('{}\t{}\t{}'.format(name, len(seq), h))
 
