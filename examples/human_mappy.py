@@ -5,6 +5,7 @@ This is based on https://github.com/lh3/minimap2/blob/master/python/minimap2.py 
 """
 
 import os
+import io
 import sys
 import argparse
 import zlib
@@ -61,17 +62,27 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
     print("Read")
 
     # here we create a fifo object that we can pass to the mp.Aligner
-    FIFO_PATH = f'/tmp/tmp.{os.getpid()}.fna.gz'
+    FIFO_PATH = f'/home/edwa0468/scratch/human/tmp.{os.getpid()}.fna.gz'
     if os.path.exists(FIFO_PATH):
         print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
-    with open(FIFO_PATH, 'wb') as out_fifo:
+    fd = os.open(FIFO_PATH, os.O_RDWR | os.O_NONBLOCK)
+
+    with io.FileIO(fd, 'wb') as f:
         print("Opened", file=sys.stderr)
-        out_fifo.write(r)
+        f.write(r)
         print("Wrote1", file=sys.stderr)
 
-    out_fifo.flush()
+
+
+    """
+    with os.fdopen(fd, 'wb') as out_fifo:
+        print("Opened", file=sys.stderr)
+        out_fifo.write(r)
+        out_fifo.flush()
+    """
+
     print("Wrote")
 
     if verbose:
