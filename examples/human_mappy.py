@@ -59,7 +59,7 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
         print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
-    out_fifo = open(FIFO_PATH, 'wb+', buffering=0)
+    out_fifo = open(FIFO_PATH, 'wb')
     stream = get_human_genome(verbose=verbose)
     if verbose:
         print("Streaming the file", file=sys.stderr)
@@ -67,6 +67,7 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
     r = stream.read()
     print("Read")
     out_fifo.write(r)
+    out_fifo.flush()
     print("Wrote")
 
     if verbose:
