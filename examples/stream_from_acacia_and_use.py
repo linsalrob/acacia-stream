@@ -35,14 +35,12 @@ def main(objectname:str, verbose=False):
         endpoint_url='https://projects.pawsey.org.au',
     )
 
-    stream = s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body']
+    stream = s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read().decode('utf-8')
 
-    f = io.TextIOWrapper(stream.read)
 
     count = {}
-    for l in f:
-        for x in l.strip().split():
-            count[x]=count.get(x, 0)+1
+    for x in stream.strip().split(" "):
+        count[x]=count.get(x, 0)+1
 
     for c in count:
         print(f"{c}\t{count[c]}")
