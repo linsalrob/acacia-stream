@@ -64,7 +64,8 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
     if verbose:
         print("Streaming the file", file=sys.stderr)
 
-    out_fifo.write(stream.read())
+    for bts in stream.read():
+        out_fifo.write(bts)
     
     if verbose:
         print("OPening the aligner", file=sys.stderr)
