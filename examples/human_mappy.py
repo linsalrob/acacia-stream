@@ -41,7 +41,7 @@ def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_pl
         if obj['Key'] == wanted:
             if verbose:
                 print(f"Streaming {wanted}", file=sys.stderr)
-            return s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body'].read()
+            return s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body']
             """
             # We're going to stream this as a binary file, so no need to decompress it!
             if wanted.endswith('.gz'):
@@ -59,10 +59,12 @@ def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None,
         print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
         sys.exit(2)
     os.mkfifo(FIFO_PATH)
+    out_fifo = open(FIFO_PATH, 'wb+', buffering=0)
+    stream = get_human_genome(verbose=verbose)
     if verbose:
         print("Streaming the file", file=sys.stderr)
-    out_fifo = open(FIFO_PATH, 'wb+', buffering=0)
-    out_fifo.write(get_human_genome(verbose=verbose))
+
+    out_fifo.write(stream.read())
     
     if verbose:
         print("OPening the aligner", file=sys.stderr)
