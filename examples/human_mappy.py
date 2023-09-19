@@ -72,6 +72,7 @@ def read_genome(fifo, reads, preset, min_cnt = None, min_sc = None, k = None, w 
     """
     if verbose:
         print("Connecting reader", file=sys.stderr)
+    print(f"Aligning from {os.getpid()} a child of {os.getppid()}", file=sys.stderr)
     a = mp.Aligner(fifo, preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
     print(f"We got {a}", file=sys.stderr)
     if not a:
