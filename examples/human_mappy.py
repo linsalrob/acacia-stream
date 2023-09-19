@@ -58,9 +58,10 @@ def write_the_genome(human_genome, fifo, verbose=False):
     A function to write the genome
     """
     stream = get_human_genome(human_genome, verbose=verbose)
-    fd = os.open(fifo, os.O_RDWR | os.O_NONBLOCK)
+    #fd = os.open(fifo, os.O_RDWR | os.O_NONBLOCK)
+    fd = os.open(fifo, os.O_RDWR)
     if verbose:
-        print(f"File descriptor {fd}. From child. Child PID: {os.getpid()} Parent PID: {os.getppid()}", file=sys.stderr)
+        print(f"File descriptor {fd} for {fifo}. From child. Child PID: {os.getpid()} Parent PID: {os.getppid()}", file=sys.stderr)
     with io.FileIO(fd, 'wb') as f:
         f.write(stream.read())
 
@@ -71,10 +72,12 @@ def read_genome(fifo, reads, preset, min_cnt=None, min_sc=None, k=None, w=None, 
     """
     if verbose:
         print(f"Aligning my PID: {os.getpid()} Parent PD {os.getppid()}", file=sys.stderr)
+    print(f"Aligner: {fifo}, preset={preset}, min_cnt={min_cnt}, min_chain_score={min_sc}, k={k}, w={w}, bw={bw}")
     a = mp.Aligner(fifo, preset=preset, min_cnt=min_cnt, min_chain_score=min_sc, k=k, w=w, bw=bw)
     if not a:
         raise Exception("ERROR: failed to load/build index file for the human genome")
     for name, seq, qual in mp.fastx_read(reads):  # read one sequence
+        # print(name)
         for h in a.map(seq, cs=out_cs):  # traverse hits
             print('{}\t{}\t{}'.format(name, len(seq), h))
 
@@ -82,23 +85,25 @@ def read_genome(fifo, reads, preset, min_cnt=None, min_sc=None, k=None, w=None, 
 def read_align(genome, reads, preset, min_cnt=None, min_sc=None, k=None, w=None, bw=None, out_cs=False, verbose=False):
 
     # here we create a fifo object that we can pass to the mp.Aligner
-    fifo_filename = f'/home/edwa0468/scratch/human/tmp.{os.getpid()}.fna.gz'
+    fifo_filename = f'/home/edwa0468/scratch/tmp/tmp.{os.getpid()}.fna.gz'
     if os.path.exists(fifo_filename):
         print(f"ERROR: {fifo_filename} exists. Not overwriting", file=sys.stderr)
         sys.exit(2)
     os.mkfifo(fifo_filename)
     if verbose:
         print(f"Our FIFO is at {fifo_filename}", file=sys.stderr)
+    
+    # start the process to read the genome from the pipe
+    readprocess = Process(target=read_genome, args=(fifo_filename, reads, preset, min_cnt, min_sc, k, w, bw, out_cs, verbose,))
+    readprocess.start()
 
     # start the process to write the genome to the pipe
-    writeprocess = Process(target=write_the_genome, args=(genome, fifo_filename,))
+    writeprocess = Process(target=write_the_genome, args=(genome, fifo_filename, verbose,))
     writeprocess.start()
-
-    # start the process to read the genome from the pipe
-    readprocess = Process(target=read_genome(fifo_filename, reads, preset, min_cnt, min_sc, k, w, bw, out_cs))
-    readprocess.start()
-    # wait until reading is done
     writeprocess.join()
+    
+
+    # wait until reading is done
     readprocess.join()
 
     os.unlink(fifo_filename)
