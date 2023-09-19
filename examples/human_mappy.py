@@ -53,20 +53,22 @@ def get_human_genome(location='databases/human/GCA_000001405.15_GRCh38_no_alt_pl
 def read_align(reads, preset, min_cnt = None, min_sc = None, k = None, w = None, bw = None, out_cs = False, verbose=False):
 
 
-    # here we create a fifo object that we can pass to the mp.Aligner
-    FIFO_PATH = f'/tmp/tmp.{os.getpid()}.fna.gz'
-    if os.path.exists(FIFO_PATH):
-        print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
-        sys.exit(2)
-    os.mkfifo(FIFO_PATH)
-    out_fifo = open(FIFO_PATH, 'wb')
     stream = get_human_genome(verbose=verbose)
     if verbose:
         print("Streaming the file", file=sys.stderr)
 
     r = stream.read()
     print("Read")
-    out_fifo.write(r)
+
+    # here we create a fifo object that we can pass to the mp.Aligner
+    FIFO_PATH = f'/tmp/tmp.{os.getpid()}.fna.gz'
+    if os.path.exists(FIFO_PATH):
+        print(f"ERROR: {FIFO_PATH} exists. Not overwriting", file=sys.stderr)
+        sys.exit(2)
+    os.mkfifo(FIFO_PATH)
+    with open(FIFO_PATH, 'wb') as out_fifo:
+        out_fifo.write(r)
+
     out_fifo.flush()
     print("Wrote")
 
