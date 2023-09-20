@@ -55,14 +55,13 @@ def create_a_connection(object:str, namedpipe:str, s3_client:BaseClient, verbose
     with io.FileIO(fd, 'w') as f:
         f.write(stream.read())
 
-def create_connections(bucket:str, database:str, datadir:str, s3_client:BaseClient, verbose:bool=False):
+def create_connections(bucket:str, database:str, datadir:str, verbose:bool=False):
     """
     Create the connections to the bucket in datadir. The bucket should be the location with the
     database files
     :param bucket: the path to the data on acacia, eg. databases/mmseqs/UniRef50.20230126
     :param database: the name of the database, eg. UniRef50
     :param datadir: the datadirectory to write the files
-    :param s3_client: the connection to s3
     :param verbose: more output
     :return: a dict of process names
     """
@@ -74,8 +73,10 @@ def create_connections(bucket:str, database:str, datadir:str, s3_client:BaseClie
         thisname = f"{database}{a}"
         fifo_name = f"{datadir}/{thisname}"
         os.mkfifo(fifo_name)
+        s3_client = get_s3client()
         processes[thisname] = {
             'name' : thisname,
+            'client': s3_client,
             'process': Process(target=create_a_connection, args=(f"{bucket}/{thisname}", fifo_name, s3_client, verbose,)),
             'named_pipe': f"{datadir}/{thisname}"
         }
@@ -103,7 +104,7 @@ def run_mmseqs(datadir: str, database: str, fasta: str, outputdir: str, verbose=
         print(f'Forking mmseqs in child {os.getpid()}', file=sys.stderr)
     subprocess.run(mmseqs_command)
 
-def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: str, s3_client: BaseClient, verbose=False):
+def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: str, verbose=False):
     """
     Run the search
     :param bucket: where the data resides
@@ -118,7 +119,7 @@ def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: 
     if verbose:
         print("Starting database connections", file=sys.stderr)
     os.makedirs(datadir, exist_ok=True)
-    connections = create_connections(bucket, database, datadir, s3_client, verbose)
+    connections = create_connections(bucket, database, datadir, verbose)
 
 
     if verbose:
@@ -143,5 +144,4 @@ if __name__ == "__main__":
     parser.add_argument('-v', help='verbose output', action='store_true')
     args = parser.parse_args()
 
-    s3_client = get_s3client()
-    run_search(args.b, args.m, args.d, args.f, args.o, s3_client, args.v)
+    run_search(args.b, args.m, args.d, args.f, args.o, args.v)
