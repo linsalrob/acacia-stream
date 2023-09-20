@@ -40,6 +40,8 @@ def create_a_connection(object:str, namedpipe:str, s3_client:BaseClient, verbose
 
     # we need the name of the bucket
     bucket_name, wanted = object.split('/', 1)
+    if verbose:
+        print("Getting {wanted} from {bucket_name}", file=sys.stderr)
     stream = s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body']
 
     # open the fio object
@@ -109,7 +111,10 @@ def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: 
 
     if verbose:
         print("Starting database connections", file=sys.stderr)
+    os.makedirs(datadir, exist_ok=True)
     connections = create_connections(bucket, database, datadir, s3_client, verbose)
+
+    exit(0)
 
     if verbose:
         print("Starting mmseqs", file=sys.stderr)
@@ -117,8 +122,8 @@ def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: 
     mmseqs.start()
     mmseqs.join()
 
-    for name in connections:
-        os.unlink(connections[name]['named_pipe'])
+    # for name in connections:
+    #     os.unlink(connections[name]['named_pipe'])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=' ')
