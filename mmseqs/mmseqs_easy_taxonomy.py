@@ -40,12 +40,16 @@ def create_a_connection(object:str, namedpipe:str, s3_client:BaseClient, verbose
 
     # we need the name of the bucket
     bucket_name, wanted = object.split('/', 1)
-    if verbose:
-        print("Getting {wanted} from {bucket_name}", file=sys.stderr)
+    #if verbose:
+    print(f"Getting {wanted} from {bucket_name}", file=sys.stderr)
     stream = s3_client.get_object(Bucket=bucket_name, Key=wanted)['Body']
 
     # open the fio object
     fd = os.open(namedpipe, os.O_RDWR)
+    if not fd:
+        print(f"Did not connect to {namedpipe}", file=sys.stderr)
+        sys.exit(2)
+
     if verbose:
         print(f"File descriptor {fd} for {namedpipe}. From child. Child PID: {os.getpid()} Parent PID: {os.getppid()}", file=sys.stderr)
     with io.FileIO(fd, 'w') as f:
@@ -68,9 +72,11 @@ def create_connections(bucket:str, database:str, datadir:str, s3_client:BaseClie
 
     for a in appendices:
         thisname = f"{database}{a}"
+        fifo_name = f"{datadir}/{thisname}"
+        os.mkfifo(fifo_name)
         processes[thisname] = {
             'name' : thisname,
-            'process': Process(target=create_a_connection, args=(f"{bucket}/{thisname}", f"{datadir}/{thisname}", s3_client, verbose,)),
+            'process': Process(target=create_a_connection, args=(f"{bucket}/{thisname}", fifo_name, s3_client, verbose,)),
             'named_pipe': f"{datadir}/{thisname}"
         }
         if verbose:
@@ -92,7 +98,7 @@ def run_mmseqs(datadir: str, database: str, fasta: str, outputdir: str, verbose=
     """
 
     # mmseqs easy-taxonomy $FASTA $BGFS/$DB/$DB $BGFS/output/$TMPOUTPUT $(mktemp -d -p $BGFS) --start-sens 1 --sens-steps 3 -s 7 --threads 32
-    mmseqs_command = ['mmseqs', 'easy-taxonomy', fasta, f"{datadir}/{database}", outputdir, "/home/edwa0468/scratch/tmp/", '-s 3', '--threads 8' ]
+    mmseqs_command = ['mmseqs', 'easy-taxonomy', fasta, f"{datadir}/{database}", outputdir, "/home/edwa0468/scratch/tmp/", '--threads', '8']
     if verbose:
         print(f'Forking mmseqs in child {os.getpid()}', file=sys.stderr)
     subprocess.run(mmseqs_command)
@@ -114,7 +120,6 @@ def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: 
     os.makedirs(datadir, exist_ok=True)
     connections = create_connections(bucket, database, datadir, s3_client, verbose)
 
-    exit(0)
 
     if verbose:
         print("Starting mmseqs", file=sys.stderr)
@@ -122,6 +127,8 @@ def run_search(bucket: str, database: str, datadir: str, fasta: str, outputdir: 
     mmseqs.start()
     mmseqs.join()
 
+    print("*************WE GOT TO THE END*************")
+    print("*************WE GOT TO THE END*************", file=sys.stderr)
     # for name in connections:
     #     os.unlink(connections[name]['named_pipe'])
 
@@ -130,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', help='fasta file', required=True)
     parser.add_argument('-o', help='output directory', required=True)
     parser.add_argument('-m', help='mmseqs database', default="UniRef50")
-    parser.add_argument('-b', help='bucket name on acacia', default="databases/mmseqs/UniRef50.20230126/")
+    parser.add_argument('-b', help='bucket name on acacia', default="databases/mmseqs/UniRef50.20230126")
     parser.add_argument('-d', help='datadirectory for connections', default='uniref')
 
     parser.add_argument('-v', help='verbose output', action='store_true')
